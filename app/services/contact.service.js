@@ -1,11 +1,11 @@
-const { ObjectId } = require("mongodb");
+const { ObjectId }  = require("mongodb");
 
 class ContactService {
     constructor(client) {
         this.Contact = client.db().collection("contacts");
     }
-    //Dinh nghia cac phuong thuc truy xuat CSDL su dung mongodb API
-    extractConactData(payload) {
+    // Định nghĩa các phương thức truy xuất CSDL mongodb API
+    extractContactData(payload) {
         const contact = {
             name: payload.name,
             email: payload.email,
@@ -14,14 +14,14 @@ class ContactService {
             favorite: payload.favorite,
         };
         //Remove undefined fields
-        calculateObjectSize.keys(contact).forEach(
-            (key) => contact[key] == undefined && delete contact[key]
-        );
+        Object.keys(contact).forEach(
+            (key) => contact[key] === undefined && delete contact[key]
+        );  
         return contact;
     }
 
     async create(payload) {
-        const contact = this.extractConactData(payload);
+        const contact = this.extractContactData(payload);
         const result = await this.Contact.findOneAndUpdate(
             contact,
             { $set: { favorite: contact.favorite === true } },
@@ -37,7 +37,7 @@ class ContactService {
 
     async findByName(name) {
         return await this.find({
-            name: { $regex: new RegExp(name), $option: "i"},
+            name: { $regex: new RegExp(name), $options: "i" }, //$options: "i" : biểu thức chính quy ko phân biệt hoa thường
         });
     }
 
@@ -51,7 +51,7 @@ class ContactService {
         const filter = {
             _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
         };
-        const update = this.extractConactData(payload);
+        const update = this.extractContactData(payload);
         const result = await this.Contact.findOneAndUpdate(
             filter,
             { $set: update },
@@ -62,19 +62,20 @@ class ContactService {
 
     async delete(id) {
         const result = await this.Contact.findOneAndDelete({
-            _id: ObjectId.isValid(id) ? new ObjectId(id): null,
+            _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
         });
         return result.value;
-    }
-
-    async findFavorite() {
-        return await this.find({ favorite: true});
     }
 
     async deleteAll() {
         const result = await this.Contact.deleteMany({});
         return result.deletedCount;
     }
+
+    async findFavorite() {
+        return await this.find({ favorite: true });
+    }
 }
 
 module.exports = ContactService;
+
